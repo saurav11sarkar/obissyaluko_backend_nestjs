@@ -119,4 +119,25 @@ export class PaymentController {
       data: result,
     };
   }
+
+
+  @Post('consultation/:consultationId')
+  @ApiOperation({
+    summary: 'Create payment intent for consultation',
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('user'))
+  async payConsultation(
+    @Req() req: Request,
+    @Param('consultationId') consultationId: string,
+  ) {
+    const result = await this.paymentService.consultationPayment(
+      req.user!.id,
+      consultationId,
+    );
+    return {
+      message: 'Payment intent created successfully',
+      data: result,
+    };
+  }
 }

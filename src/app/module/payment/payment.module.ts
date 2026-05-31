@@ -8,6 +8,10 @@ import {
 } from '../subscribe/entities/subscribe.entity';
 import { User, UserSchema } from '../user/entities/user.entity';
 import { Payment, PaymentSchema } from './entities/payment.entity';
+import {
+  Consultation,
+  ConsultationSchema,
+} from '../consultation/entities/consultation.entity';
 
 @Module({
   imports: [
@@ -15,6 +19,7 @@ import { Payment, PaymentSchema } from './entities/payment.entity';
       { name: Subscribe.name, schema: SubscribeSchema },
       { name: User.name, schema: UserSchema },
       { name: Payment.name, schema: PaymentSchema },
+      { name: Consultation.name, schema: ConsultationSchema },
     ]),
   ],
   controllers: [PaymentController],

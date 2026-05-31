@@ -1,11 +1,23 @@
 // consultation.controller.ts
 import {
-  Controller, Get, Post, Put, Delete,
-  Body, Param, Query, UseGuards,
-  HttpCode, HttpStatus, Req,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Req,
 } from '@nestjs/common';
 import {
-  ApiTags, ApiBearerAuth, ApiOperation, ApiQuery,
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ConsultationService } from './consultation.service';
 import { CreateConsultationDto } from './dto/create-consultation.dto';
@@ -21,10 +33,18 @@ export class ConsultationController {
   // ✅ Public: anyone can book
   @Post()
   @ApiOperation({ summary: 'Book a consultation (public)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('user'))
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateConsultationDto, @Req() req: Request) {
-    const userId = (req as any).user?.id; // optional, if logged in
-    const result = await this.consultationService.create(dto, userId);
+  async create(
+    @Req() req: Request,
+    @Body() createConsultationDto: CreateConsultationDto,
+  ) {
+    const userId = req.user!.id;
+    const result = await this.consultationService.create(
+      userId,
+      createConsultationDto,
+    );
     return { message: 'Consultation booked successfully', data: result };
   }
 
@@ -85,5 +105,27 @@ export class ConsultationController {
   async remove(@Param('id') id: string) {
     const result = await this.consultationService.remove(id);
     return { message: 'Consultation deleted successfully', data: result };
+  }
+
+  //admin: approve
+  @Put(':id/approve')
+  @ApiOperation({ summary: 'Approve consultation (admin)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('admin'))
+  @HttpCode(HttpStatus.OK)
+  async approve(@Param('id') id: string) {
+    const result = await this.consultationService.approveConsultation(id);
+    return { message: 'Consultation approved successfully', data: result };
+  }
+
+  // Admin: Reject consultation
+  @Delete(':id/reject')
+  @ApiOperation({ summary: 'Reject consultation (admin)' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('admin'))
+  @HttpCode(HttpStatus.OK)
+  async reject(@Param('id') id: string) {
+    const result = await this.consultationService.rejectConsultation(id);
+    return { message: 'Consultation rejected successfully', data: result };
   }
 }

@@ -10,6 +10,12 @@ import {
   SubscribeDocument,
 } from '../subscribe/entities/subscribe.entity';
 import type { Response } from 'express';
+import {
+  Consultation,
+  ConsultationDocument,
+  ConsultationStatus,
+  PaymentStatus,
+} from '../consultation/entities/consultation.entity';
 
 @Injectable()
 export class WebhookService {
@@ -25,6 +31,9 @@ export class WebhookService {
 
     @InjectModel(Subscribe.name)
     private readonly subscribeModel: Model<SubscribeDocument>,
+
+    @InjectModel(Consultation.name)
+    private readonly consultationModel: Model<ConsultationDocument>,
   ) {
     if (config.stripe.secretKey) {
       this.stripe = new Stripe(config.stripe.secretKey);
@@ -70,22 +79,23 @@ export class WebhookService {
     }
   }
 
-  // ── payment_intent.succeeded ───────────────────────────────────────────────
+
   private async handlePaymentIntentSucceeded(
     event: Stripe.Event,
     res: Response,
   ) {
     const intent = event.data.object as Stripe.PaymentIntent;
+    const paymentType = intent.metadata?.paymentType;
 
     const payment = await this.paymentModel.findOne({
       stripePaymentIntentId: intent.id,
     });
     if (!payment) return res.json({ received: true });
 
+ 
     payment.status = 'completed';
     await payment.save();
 
-    const paymentType = intent.metadata?.paymentType ?? payment.paymentType;
 
     if (paymentType === 'subscription') {
       const subscribeId =
@@ -95,7 +105,6 @@ export class WebhookService {
       const plan = await this.subscribeModel.findById(subscribeId);
       if (!plan) return res.json({ received: true });
 
-      // Add user to plan's users array if not already present
       const alreadyAdded = plan.user?.some(
         (id) => id.toString() === payment.user.toString(),
       );
@@ -105,11 +114,31 @@ export class WebhookService {
         await plan.save();
       }
 
+      return res.json({ received: true, type: 'subscription' });
+    }
+
+    
+    if (paymentType === 'consultation') {
+      const consultationId =
+        payment.consultation?.toString() ?? intent.metadata?.consultationId;
+      if (!consultationId) return res.json({ received: true });
+
+      const consultation =
+        await this.consultationModel.findById(consultationId);
+      if (!consultation) return res.json({ received: true });
+
+      consultation.paymentStatus = PaymentStatus.PAID;
+      consultation.status = ConsultationStatus.PENDING;
+      await consultation.save();
+
+      this.logger.log(
+        `Consultation ${consultationId} payment received. Awaiting admin approval.`,
+      );
+
       return res.json({
         received: true,
-        type: 'subscription',
-        userId: payment.user,
-        planId: plan._id,
+        type: 'consultation',
+        status: 'awaiting_admin_approval',
       });
     }
 

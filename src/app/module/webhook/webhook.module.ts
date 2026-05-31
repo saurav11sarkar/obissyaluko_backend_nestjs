@@ -8,6 +8,10 @@ import {
   Subscribe,
   SubscribeSchema,
 } from '../subscribe/entities/subscribe.entity';
+import {
+  Consultation,
+  ConsultationSchema,
+} from '../consultation/entities/consultation.entity';
 
 @Module({
   imports: [
@@ -15,6 +19,7 @@ import {
       { name: User.name, schema: UserSchema },
       { name: Payment.name, schema: PaymentSchema },
       { name: Subscribe.name, schema: SubscribeSchema },
+      { name: Consultation.name, schema: ConsultationSchema },
     ]),
   ],
   controllers: [WebhookController],
