@@ -1,7 +1,7 @@
 // consultation.service.ts
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   Consultation,
   ConsultationDocument,
@@ -49,8 +49,49 @@ export class ConsultationService {
     const result = await this.consultationModel.create({
       ...createConsultationDto,
       userId,
+      paymentStatus: PaymentStatus.FREE,
     });
     return result;
+  }
+
+  private async syncStripePayment(consultation: ConsultationDocument) {
+    if (consultation.paymentStatus === PaymentStatus.REFUNDED) {
+      return;
+    }
+
+    const payment = await this.paymentModel.findOne({
+      consultation: consultation._id,
+      status: { $in: ['pending', 'authorized', 'completed'] },
+    });
+    if (!payment) return;
+
+    if (payment.status !== 'completed' && payment.stripePaymentIntentId) {
+      const stripe = this.getStripeClient();
+      const intent = await stripe.paymentIntents.retrieve(
+        payment.stripePaymentIntentId,
+      );
+
+      if (intent.status === 'requires_capture') {
+        payment.status = 'authorized';
+        consultation.paymentStatus = PaymentStatus.AUTHORIZED;
+        await payment.save();
+        await consultation.save();
+        return;
+      }
+
+      if (intent.status !== 'succeeded') return;
+
+      payment.status = 'completed';
+      await payment.save();
+    }
+
+    if (payment.status === 'completed') {
+      consultation.paymentStatus = PaymentStatus.PAID;
+      if (consultation.adminStatus !== 'approved') {
+        consultation.status = ConsultationStatus.PENDING;
+      }
+      await consultation.save();
+    }
   }
 
   // Admin: get all with optional filters
@@ -75,10 +116,32 @@ export class ConsultationService {
 
   // Get single
   async findOne(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException(
+        'Invalid Consultation ID',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const consultation = await this.consultationModel.findById(id);
     if (!consultation) {
       throw new HttpException('Consultation not found', HttpStatus.NOT_FOUND);
     }
+
+    // Auto-sync status from Stripe if payment is completed but local DB is still pending
+    if (
+      consultation.fee > 0 &&
+      consultation.paymentStatus !== PaymentStatus.PAID
+    ) {
+      if (this.stripe) {
+        try {
+          await this.syncStripePayment(consultation);
+        } catch (err) {
+          // Ignore Stripe retrieval errors to avoid breaking the GET request
+        }
+      }
+    }
+
     return consultation;
   }
 
@@ -119,12 +182,49 @@ export class ConsultationService {
     if (!consultation) {
       throw new HttpException('Consultation not found', HttpStatus.NOT_FOUND);
     }
+    if (consultation.fee > 0) {
+      await this.syncStripePayment(consultation);
+    }
+    if (
+      consultation.fee > 0 &&
+      consultation.paymentStatus === PaymentStatus.AUTHORIZED
+    ) {
+      const payment = await this.paymentModel.findOne({
+        consultation: consultation._id,
+        status: 'authorized',
+      });
+      if (!payment?.stripePaymentIntentId) {
+        throw new HttpException(
+          'Cannot approve: authorized payment record not found',
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      try {
+        const stripe = this.getStripeClient();
+        const intent = await stripe.paymentIntents.capture(
+          payment.stripePaymentIntentId,
+        );
+        if (intent.status !== 'succeeded') {
+          throw new Error(`Stripe capture status is ${intent.status}`);
+        }
+
+        payment.status = 'completed';
+        await payment.save();
+        consultation.paymentStatus = PaymentStatus.PAID;
+      } catch (err: any) {
+        throw new HttpException(
+          `Payment capture failed: ${err.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
     if (
       consultation.fee > 0 &&
       consultation.paymentStatus !== PaymentStatus.PAID
     ) {
       throw new HttpException(
-        'Cannot approve: payment not completed yet',
+        'Cannot approve: payment is not authorized yet',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -141,6 +241,9 @@ export class ConsultationService {
     if (!consultation) {
       throw new HttpException('Consultation not found', HttpStatus.NOT_FOUND);
     }
+    if (consultation.fee > 0) {
+      await this.syncStripePayment(consultation);
+    }
     if (
       consultation.fee > 0 &&
       consultation.paymentStatus === PaymentStatus.PAID
@@ -150,24 +253,56 @@ export class ConsultationService {
         status: 'completed',
       });
 
-      if (payment && payment.stripePaymentIntentId) {
+      if (!payment?.stripePaymentIntentId) {
+        throw new HttpException(
+          'Cannot reject: completed payment record not found',
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      try {
+        const stripe = this.getStripeClient();
+
+        await stripe.refunds.create({
+          payment_intent: payment.stripePaymentIntentId,
+        });
+
+        payment.status = 'refunded';
+        await payment.save();
+
+        consultation.paymentStatus = PaymentStatus.REFUNDED;
+      } catch (err: any) {
+        throw new HttpException(
+          `Refund failed: ${err.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    if (
+      consultation.fee > 0 &&
+      consultation.paymentStatus !== PaymentStatus.PAID
+    ) {
+      const payment = await this.paymentModel.findOne({
+        consultation: consultation._id,
+        status: { $in: ['pending', 'authorized'] },
+      });
+
+      if (payment?.stripePaymentIntentId) {
         try {
           const stripe = this.getStripeClient();
-
-          await stripe.refunds.create({
-            payment_intent: payment.stripePaymentIntentId,
-          });
-
-          payment.status = 'refunded';
+          await stripe.paymentIntents.cancel(payment.stripePaymentIntentId);
+          payment.status = 'cancelled';
           await payment.save();
-
-          consultation.paymentStatus = PaymentStatus.FREE;
+          consultation.paymentStatus = PaymentStatus.CANCELLED;
         } catch (err: any) {
           throw new HttpException(
-            `Refund failed: ${err.message}`,
+            `Payment cancellation failed: ${err.message}`,
             HttpStatus.INTERNAL_SERVER_ERROR,
           );
         }
+
+        consultation.paymentStatus = PaymentStatus.CANCELLED;
       }
     }
 

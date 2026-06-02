@@ -30,7 +30,6 @@ import type { Request } from 'express';
 export class ConsultationController {
   constructor(private readonly consultationService: ConsultationService) {}
 
-  // ✅ Public: anyone can book
   @Post()
   @ApiOperation({ summary: 'Book a consultation (public)' })
   @ApiBearerAuth('access-token')
@@ -48,7 +47,6 @@ export class ConsultationController {
     return { message: 'Consultation booked successfully', data: result };
   }
 
-  // ✅ Admin: get all consultations
   @Get()
   @ApiOperation({ summary: 'Get all consultations (admin)' })
   @ApiBearerAuth('access-token')
@@ -62,7 +60,7 @@ export class ConsultationController {
     return { message: 'Consultations fetched successfully', data: result };
   }
 
-  // ✅ User: get own consultations
+
   @Get('my')
   @ApiOperation({ summary: 'Get my consultations (logged in user)' })
   @ApiBearerAuth('access-token')
@@ -74,18 +72,18 @@ export class ConsultationController {
     return { message: 'Your consultations fetched', data: result };
   }
 
-  // ✅ Admin: get single
+
   @Get(':id')
   @ApiOperation({ summary: 'Get single consultation (admin)' })
   @ApiBearerAuth('access-token')
-  @UseGuards(AuthGuard('admin'))
+  @UseGuards(AuthGuard('user','admin'))
   @HttpCode(HttpStatus.OK)
   async findOne(@Param('id') id: string) {
     const result = await this.consultationService.findOne(id);
     return { message: 'Consultation fetched', data: result };
   }
 
-  // ✅ Admin: update (approve payment, confirm, add meeting link)
+
   @Put(':id')
   @ApiOperation({ summary: 'Update consultation (admin)' })
   @ApiBearerAuth('access-token')
@@ -96,7 +94,7 @@ export class ConsultationController {
     return { message: 'Consultation updated successfully', data: result };
   }
 
-  // ✅ Admin: delete
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete consultation (admin)' })
   @ApiBearerAuth('access-token')
@@ -107,7 +105,7 @@ export class ConsultationController {
     return { message: 'Consultation deleted successfully', data: result };
   }
 
-  //admin: approve
+
   @Put(':id/approve')
   @ApiOperation({ summary: 'Approve consultation (admin)' })
   @ApiBearerAuth('access-token')
@@ -118,7 +116,7 @@ export class ConsultationController {
     return { message: 'Consultation approved successfully', data: result };
   }
 
-  // Admin: Reject consultation
+
   @Delete(':id/reject')
   @ApiOperation({ summary: 'Reject consultation (admin)' })
   @ApiBearerAuth('access-token')

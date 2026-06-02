@@ -109,6 +109,16 @@ export class PaymentController {
     };
   }
 
+  @Get('config/stripe')
+  @ApiOperation({ summary: 'Get Stripe publishable key' })
+  @HttpCode(HttpStatus.OK)
+  getStripeConfig() {
+    return {
+      message: 'Stripe config retrieved successfully',
+      data: this.paymentService.getStripeConfig(),
+    };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get payment by id' })
   @HttpCode(HttpStatus.OK)
@@ -119,7 +129,6 @@ export class PaymentController {
       data: result,
     };
   }
-
 
   @Post('consultation/:consultationId')
   @ApiOperation({

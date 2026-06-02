@@ -22,7 +22,10 @@ export enum ConsultationType {
 
 export enum PaymentStatus {
   FREE = 'Free',
+  AUTHORIZED = 'Authorized',
   PAID = 'Paid',
+  CANCELLED = 'Cancelled',
+  REFUNDED = 'Refunded',
 }
 
 export enum Duration {
@@ -74,8 +77,8 @@ export class Consultation {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
-  @Prop({enum:['Pending','approved','rejected'],default:'Pending'})
-  adminStatus:string;
+  @Prop({ enum: ['Pending', 'approved', 'rejected'], default: 'Pending' })
+  adminStatus: string;
 }
 
 export const ConsultationSchema = SchemaFactory.createForClass(Consultation);

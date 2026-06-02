@@ -8,6 +8,8 @@ import { UtilsInterceptor } from './app/utils/utils.interceptor';
 import { GlobalExceptionFilter } from './app/middlewares/globalErrors.filter';
 import express from 'express';
 import config from './app/config';
+import 'dotenv/config';
+
 dotenv.config();
 
 async function bootstrap() {
@@ -20,7 +22,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.enableCors({
-    origin: config.corsOrigin === '*' ? true : config.corsOrigin,
+    origin: true,
     credentials: true,
   });
 

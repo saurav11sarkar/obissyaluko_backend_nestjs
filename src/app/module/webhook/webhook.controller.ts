@@ -14,8 +14,14 @@ export class WebhookController {
   async handleWebhook(
     @Req() req: Request,
     @Res() res: Response,
-    @Headers('stripe-signature') sig: string,
+    @Headers('stripe-signature') sig?: string,
   ) {
-    return this.webhookService.handleWebhook(req.body as Buffer, sig, res);
+    const rawBody = (req as any).rawBody || req.body;
+    if (!sig || !Buffer.isBuffer(rawBody)) {
+      return res
+        .status(400)
+        .json({ message: 'Invalid Stripe webhook request' });
+    }
+    return this.webhookService.handleWebhook(rawBody, sig, res);
   }
 }

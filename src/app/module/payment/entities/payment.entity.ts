@@ -22,7 +22,14 @@ export class Payment {
 
   @Prop({
     type: String,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
+    enum: [
+      'pending',
+      'authorized',
+      'completed',
+      'failed',
+      'cancelled',
+      'refunded',
+    ],
     default: 'pending',
   })
   status!: string;

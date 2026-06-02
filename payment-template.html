@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment</title>
+    <title>Consultation Payment</title>
     <script src="https://js.stripe.com/v3/"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Outfit:wght@300;400;500;600&display=swap');
@@ -26,6 +26,7 @@
         --accent2: #2d5a4e;
         --red: #d94f4f;
         --green: #2d8c6a;
+        --yellow: #b8860b;
         --serif: 'Playfair Display', Georgia, serif;
         --sans: 'Outfit', sans-serif;
         --radius: 18px;
@@ -40,7 +41,6 @@
         color: var(--dark);
       }
 
-      /* subtle grain overlay */
       body::before {
         content: '';
         position: fixed;
@@ -50,7 +50,6 @@
         pointer-events: none;
       }
 
-      /* ── layout ── */
       .page {
         position: relative;
         z-index: 1;
@@ -67,11 +66,11 @@
         max-width: 920px;
         display: grid;
         grid-template-columns: 1fr 420px;
-        gap: 0;
         background: var(--white);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
         overflow: hidden;
+        position: relative;
       }
       @media (max-width: 720px) {
         .shell {
@@ -83,7 +82,7 @@
         }
       }
 
-      /* ── LEFT: subscription detail ── */
+      /* LEFT */
       .left {
         border-right: 1px solid var(--line);
         display: flex;
@@ -197,7 +196,6 @@
         gap: 12px;
         font-size: 14px;
         color: var(--dark);
-        font-weight: 400;
       }
       .feat-icon {
         width: 26px;
@@ -209,6 +207,63 @@
         align-items: center;
         justify-content: center;
         font-size: 13px;
+      }
+
+      /* Status badge on left */
+      .status-area {
+        padding: 0 28px 20px;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .status-badge.pending {
+        background: rgba(184, 134, 11, 0.08);
+        color: var(--yellow);
+        border: 1px solid rgba(184, 134, 11, 0.2);
+      }
+      .status-badge.paid {
+        background: rgba(45, 140, 106, 0.08);
+        color: var(--green);
+        border: 1px solid rgba(45, 140, 106, 0.2);
+      }
+      .status-badge.approved {
+        background: rgba(45, 90, 78, 0.08);
+        color: var(--accent2);
+        border: 1px solid rgba(45, 90, 78, 0.2);
+      }
+      .status-badge.rejected {
+        background: rgba(217, 79, 79, 0.08);
+        color: var(--red);
+        border: 1px solid rgba(217, 79, 79, 0.2);
+      }
+      .status-badge.free {
+        background: rgba(107, 101, 96, 0.08);
+        color: var(--mid);
+        border: 1px solid rgba(107, 101, 96, 0.2);
+      }
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .status-dot.pulse {
+        animation: pulse 1.8s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
       }
 
       .plan-footer {
@@ -224,7 +279,7 @@
         font-size: 12px;
       }
 
-      /* ── RIGHT: payment form ── */
+      /* RIGHT */
       .right {
         padding: 36px 32px;
         display: flex;
@@ -232,7 +287,7 @@
       }
 
       .form-header {
-        margin-bottom: 28px;
+        margin-bottom: 24px;
       }
       .form-header h2 {
         font-family: var(--serif);
@@ -247,7 +302,7 @@
         font-weight: 300;
       }
 
-      /* config section */
+      /* config */
       .config-toggle {
         display: flex;
         align-items: center;
@@ -289,7 +344,6 @@
         display: flex;
       }
 
-      /* fields */
       .field {
         display: flex;
         flex-direction: column;
@@ -324,7 +378,6 @@
         color: #bbb;
       }
 
-      /* stripe elements */
       .stripe-wrap {
         background: #f9f7f4;
         border: 1.5px solid var(--line);
@@ -342,14 +395,12 @@
         grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
-
       .divider {
         height: 1px;
         background: var(--line);
         margin: 20px 0;
       }
 
-      /* amount row */
       .amount-row {
         display: flex;
         align-items: center;
@@ -371,12 +422,10 @@
         color: var(--accent2);
       }
 
-      /* msg */
       .msg {
         padding: 11px 14px;
         border-radius: 10px;
         font-size: 13px;
-        font-weight: 400;
         margin-bottom: 14px;
         display: none;
         line-height: 1.5;
@@ -400,7 +449,6 @@
         border: 1px solid rgba(200, 169, 110, 0.3);
       }
 
-      /* pay button */
       .btn-pay {
         width: 100%;
         padding: 15px;
@@ -458,7 +506,87 @@
         color: var(--mid);
       }
 
-      /* ── success overlay ── */
+      /* Check status section */
+      .check-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      .check-section h4 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--mid);
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
+      }
+      .btn-check {
+        width: 100%;
+        padding: 11px;
+        background: transparent;
+        border: 1.5px solid var(--line);
+        border-radius: 10px;
+        font-family: var(--sans);
+        font-size: 13px;
+        color: var(--mid);
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+        margin-bottom: 10px;
+      }
+      .btn-check:hover {
+        border-color: var(--accent2);
+        color: var(--accent2);
+      }
+
+      /* Status result card */
+      .status-card {
+        display: none;
+        padding: 16px;
+        background: #f9f7f4;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin-top: 10px;
+      }
+      .status-card.show {
+        display: block;
+      }
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .status-row:last-child {
+        border-bottom: none;
+      }
+      .status-key {
+        color: var(--mid);
+        font-size: 12px;
+      }
+      .status-val {
+        font-weight: 500;
+        color: var(--dark);
+      }
+      .s-paid {
+        color: var(--green);
+      }
+      .s-free {
+        color: var(--mid);
+      }
+      .s-pending {
+        color: var(--yellow);
+      }
+      .s-confirmed {
+        color: var(--accent2);
+      }
+      .s-cancelled {
+        color: var(--red);
+      }
+
+      /* success overlay */
       .success-overlay {
         display: none;
         position: absolute;
@@ -486,7 +614,6 @@
           transform: scale(1);
         }
       }
-
       .success-ring {
         width: 80px;
         height: 80px;
@@ -520,8 +647,19 @@
         padding: 8px 14px;
         border-radius: 8px;
       }
+      .success-note {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--yellow);
+        background: rgba(184, 134, 11, 0.06);
+        border: 1px solid rgba(184, 134, 11, 0.2);
+        padding: 10px 14px;
+        border-radius: 8px;
+        max-width: 320px;
+        line-height: 1.5;
+      }
       .btn-again {
-        margin-top: 28px;
+        margin-top: 20px;
         padding: 11px 28px;
         background: transparent;
         border: 1.5px solid var(--line);
@@ -542,16 +680,16 @@
   </head>
   <body>
     <div class="page">
-      <div class="shell" style="position: relative">
-        <!-- ── LEFT: Subscription Detail ── -->
+      <div class="shell">
+        <!-- LEFT -->
         <div class="left">
           <div class="plan-hero">
             <div class="plan-hero-pattern"></div>
-            <div class="plan-badge">Car Checker</div>
+            <div class="plan-badge">Obissyaluko</div>
             <div class="plan-hero-content">
-              <div class="plan-name" id="planNameDisplay">Pro Subscription</div>
-              <div class="plan-tagline">
-                Full access · All features included
+              <div class="plan-name" id="conTypeDisplay">Consultation</div>
+              <div class="plan-tagline" id="conDurationDisplay">
+                Select type in config
               </div>
             </div>
           </div>
@@ -560,42 +698,51 @@
             <div class="plan-price-row">
               <span class="price-currency">$</span>
               <span class="price-amount" id="planPriceDisplay">—</span>
-              <span class="price-period">/ one-time</span>
+              <span class="price-period">/ session</span>
             </div>
-
-            <div class="features-title">What's included</div>
+            <div class="features-title">What happens next</div>
             <ul class="features-list">
               <li>
-                <span class="feat-icon">🔍</span> Full vehicle history report
+                <span class="feat-icon">💳</span> Payment processed by Stripe
               </li>
               <li>
-                <span class="feat-icon">📋</span> MOT & service record access
+                <span class="feat-icon">✅</span> Webhook confirms payment
               </li>
               <li>
-                <span class="feat-icon">⚠️</span> Outstanding finance check
+                <span class="feat-icon">⏳</span> Admin reviews your booking
               </li>
               <li>
-                <span class="feat-icon">🛡️</span> Stolen vehicle database check
+                <span class="feat-icon">📅</span> Meeting link sent on approval
               </li>
-              <li><span class="feat-icon">📊</span> Valuation & market data</li>
-              <li><span class="feat-icon">📞</span> Priority support access</li>
+              <li>
+                <span class="feat-icon">🔄</span> Auto-refund on rejection
+              </li>
             </ul>
           </div>
 
-          <div class="plan-footer">
-            Secured by Stripe · 256-bit SSL encryption
+          <div class="status-area" id="statusArea" style="display: none">
+            <div class="status-badge pending" id="statusBadge">
+              <span class="status-dot pulse"></span>
+              <span id="statusText">Pending</span>
+            </div>
           </div>
+
+          <div class="plan-footer">Secured by Stripe · 256-bit SSL</div>
         </div>
 
-        <!-- ── RIGHT: Payment Form ── -->
+        <!-- RIGHT -->
         <div class="right">
           <div class="form-header">
-            <h2>Complete Payment</h2>
-            <p>Enter your card details below to activate</p>
+            <h2>Consultation Payment</h2>
+            <p>Pay to confirm your consultation booking</p>
           </div>
 
-          <!-- API Config (collapsible) -->
-          <div class="config-toggle" id="configToggle" onclick="toggleConfig()">
+          <!-- Config -->
+          <div
+            class="config-toggle open"
+            id="configToggle"
+            onclick="toggleConfig()"
+          >
             <span>⚙ API Config</span>
             <svg
               width="14"
@@ -608,35 +755,44 @@
               <path d="M6 9l6 6 6-6" />
             </svg>
           </div>
-          <div class="config-body" id="configBody">
+          <div class="config-body open" id="configBody">
             <div class="field">
               <label>Stripe Publishable Key</label>
-              <input id="pubKey" type="text" placeholder="pk_test_..." />
+              <input
+                id="pubKey"
+                type="text"
+                placeholder="pk_test_..."
+                value="pk_test_51SSE8YGcSUcKVQJqhrlXPBNVNfDgmhYSMKnGs0kMKeO5CETW0MAiAnU2pGZUv47E9J77jzFptmhg6z7ksJrQ9ihG002z1tUgMm"
+              />
             </div>
             <div class="field">
               <label>Backend URL</label>
               <input
                 id="baseUrl"
                 type="text"
-                value="http://localhost:3000/api/v1"
+                value="http://localhost:5000/api/v1"
               />
             </div>
             <div class="field">
-              <label>JWT Token</label>
-              <input id="jwtToken" type="text" placeholder="eyJhbGci..." />
+              <label>JWT Token (user)</label>
+              <input
+                id="jwtToken"
+                type="text"
+                placeholder="Login kore token paste koro"
+              />
             </div>
             <div class="field">
-              <label>Subscribe Plan ID</label>
+              <label>Consultation ID</label>
               <input
-                id="subId"
+                id="conId"
                 type="text"
                 placeholder="MongoDB ObjectId"
-                onblur="fetchPlanPreview()"
+                onblur="fetchConPreview()"
               />
             </div>
           </div>
 
-          <!-- Amount row -->
+          <!-- Amount -->
           <div class="amount-row" id="amountRow" style="display: none">
             <span class="amount-label">Total due today</span>
             <span class="amount-value" id="amountDisplay">$0.00</span>
@@ -667,24 +823,70 @@
           <div id="msg" class="msg"></div>
 
           <button class="btn-pay" id="payBtn" onclick="pay()">
-            <span id="payText">Pay Now</span>
+            <span id="payText">Pay for Consultation</span>
             <div class="spinner" id="spin"></div>
           </button>
 
           <div class="secure-note">
             🔒 &nbsp;Your payment is secured with 256-bit encryption
           </div>
+
+          <!-- Check Status -->
+          <div class="check-section">
+            <h4>CHECK STATUS</h4>
+            <button class="btn-check" onclick="checkStatus()">
+              🔍 Check Consultation Status
+            </button>
+            <div class="status-card" id="statusCard">
+              <div class="status-row">
+                <span class="status-key">Consultation ID</span
+                ><span
+                  class="status-val"
+                  id="sc-id"
+                  style="font-size: 11px"
+                ></span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">Type</span
+                ><span class="status-val" id="sc-type"></span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">Booking Status</span
+                ><span class="status-val" id="sc-status"></span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">Payment Status</span
+                ><span class="status-val" id="sc-pay"></span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">Admin Status</span
+                ><span class="status-val" id="sc-admin"></span>
+              </div>
+              <div class="status-row">
+                <span class="status-key">Fee</span
+                ><span class="status-val" id="sc-fee"></span>
+              </div>
+              <div class="status-row" id="sc-meeting-row" style="display: none">
+                <span class="status-key">Meeting Link</span
+                ><span class="status-val" id="sc-meeting"></span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- ── SUCCESS overlay ── -->
+        <!-- SUCCESS overlay -->
         <div class="success-overlay" id="successOverlay">
           <div class="success-ring">✓</div>
-          <h3>Payment Successful!</h3>
+          <h3>Payment Authorized!</h3>
           <p>
-            Your subscription is now active. You have full access to all Car
-            Checker features.
+            Your card is authorized. Payment will be captured after admin
+            approval.
           </p>
           <div class="success-id" id="successId"></div>
+          <div class="success-note">
+            ⏳ Admin এখন তোমার booking review করবে। Approve হলে meeting link
+            পাবে। Reject হলে auto refund হবে।
+          </div>
           <button class="btn-again" onclick="resetPage()">← Test Again</button>
         </div>
       </div>
@@ -696,11 +898,29 @@
         cardNumber,
         cardExpiry,
         cardCvc,
+        activeStripeKey,
         clientSecret = null;
-      let isPaymentProcessing = false;
+      let busy = false;
 
-      // ── init Stripe elements ──────────────────────────────────────────────────
-      function initStripe(pubKey) {
+      const PK_DEFAULT =
+        'pk_test_51SSE8YGcSUcKVQJqhrlXPBNVNfDgmhYSMKnGs0kMKeO5CETW0MAiAnU2pGZUv47E9J77jzFptmhg6z7ksJrQ9ihG002z1tUgMm';
+
+      window.addEventListener('load', async () => {
+        await syncStripeConfig();
+        openConfig();
+
+        // Auto-fetch preview on config changes
+        ['conId', 'jwtToken', 'baseUrl'].forEach((id) => {
+          document
+            .getElementById(id)
+            .addEventListener('change', fetchConPreview);
+          document
+            .getElementById(id)
+            .addEventListener('input', fetchConPreview);
+        });
+      });
+
+      function initStripe(pk) {
         if (cardNumber) {
           try {
             cardNumber.destroy();
@@ -708,186 +928,223 @@
             cardCvc.destroy();
           } catch (e) {}
         }
-
         try {
-          stripe = Stripe(pubKey);
+          stripe = Stripe(pk);
+          activeStripeKey = pk;
           elements = stripe.elements();
           const style = {
             base: {
               color: '#1a1814',
               fontFamily: "'Outfit', sans-serif",
               fontSize: '14px',
-              fontWeight: '400',
               '::placeholder': { color: '#bbb' },
             },
             invalid: { color: '#d94f4f' },
           };
-
           cardNumber = elements.create('cardNumber', { style, showIcon: true });
           cardExpiry = elements.create('cardExpiry', { style });
           cardCvc = elements.create('cardCvc', { style });
-
           cardNumber.mount('#cardNumber');
           cardExpiry.mount('#cardExpiry');
           cardCvc.mount('#cardCvc');
-
-          const pairs = [
+          [
             [cardNumber, 'numWrap'],
             [cardExpiry, 'expWrap'],
             [cardCvc, 'cvcWrap'],
-          ];
-          pairs.forEach(([el, id]) => {
+          ].forEach(([el, id]) => {
             el.on('focus', () =>
               document.getElementById(id).classList.add('focused'),
             );
             el.on('blur', () =>
               document.getElementById(id).classList.remove('focused'),
             );
-            el.on('change', ({ error }) => {
-              if (error) {
-                showMsg('error', error.message);
-              } else {
-                showMsg('', '');
-              }
-            });
+            el.on('change', ({ error }) =>
+              error ? showMsg('error', error.message) : showMsg('', ''),
+            );
           });
-        } catch (err) {
-          showMsg('error', `Stripe initialization error: ${err.message}`);
-        }
-      }
-
-      // Auto-init on key input
-      document.addEventListener('DOMContentLoaded', () => {
-        const pubKeyInput = document.getElementById('pubKey');
-        if (pubKeyInput) {
-          pubKeyInput.addEventListener('change', () => {
-            const k = pubKeyInput.value.trim();
-            if (k && k.startsWith('pk_')) {
-              initStripe(k);
-              showMsg('success', 'Stripe key loaded successfully');
-            } else if (k) {
-              showMsg('error', 'Invalid Stripe key format');
-            }
-          });
-        }
-      });
-
-      // ── config toggle ─────────────────────────────────────────────────────────
-      function toggleConfig() {
-        const toggle = document.getElementById('configToggle');
-        const body = document.getElementById('configBody');
-        if (toggle && body) {
-          toggle.classList.toggle('open');
-          body.classList.toggle('open');
-        }
-      }
-
-      // Open config on load
-      window.addEventListener('load', () => {
-        const toggle = document.getElementById('configToggle');
-        const body = document.getElementById('configBody');
-        if (toggle && body) {
-          toggle.classList.add('open');
-          body.classList.add('open');
-        }
-      });
-
-      // ── fetch plan preview (optional, to show name/price) ────────────────────
-      async function fetchPlanPreview() {
-        try {
-          const baseUrl = document
-            .getElementById('baseUrl')
-            .value.trim()
-            .replace(/\/$/, '');
-          const token = document.getElementById('jwtToken').value.trim();
-          const subId = document.getElementById('subId').value.trim();
-
-          if (!subId || !baseUrl) {
-            return;
-          }
-
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
-
-          const res = await fetch(`${baseUrl}/subscribe/${subId}`, {
-            method: 'GET',
-            headers,
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            const plan = data?.data || data;
-
-            if (plan.name) {
-              document.getElementById('planNameDisplay').textContent =
-                plan.name;
-            }
-            if (plan.price) {
-              document.getElementById('planPriceDisplay').textContent = Number(
-                plan.price,
-              ).toFixed(2);
-            }
-          }
         } catch (e) {
-          // Silently fail - preview is optional
-          console.log('Plan preview unavailable');
+          showMsg('error', 'Stripe init error: ' + e.message);
         }
       }
 
-      // ── PAY ───────────────────────────────────────────────────────────────────
-      async function pay() {
-        if (isPaymentProcessing) return;
+      document.getElementById('pubKey').addEventListener('change', () => {
+        const k = document.getElementById('pubKey').value.trim();
+        if (k.startsWith('pk_')) {
+          initStripe(k);
+          showMsg('success', 'Stripe key loaded');
+        }
+      });
 
-        const pubKey = document.getElementById('pubKey').value.trim();
-        const baseUrl = document
+      async function syncStripeConfig() {
+        const base = document
+          .getElementById('baseUrl')
+          .value.trim()
+          .replace(/\/$/, '');
+
+        try {
+          const res = await fetch(`${base}/payment/config/stripe`);
+          if (!res.ok) throw new Error(`Error ${res.status}`);
+
+          const payload = await res.json();
+          const key =
+            payload?.data?.publishableKey ??
+            payload?.publishableKey ??
+            PK_DEFAULT;
+          document.getElementById('pubKey').value = key;
+          initStripe(key);
+        } catch {
+          initStripe(PK_DEFAULT);
+          showMsg(
+            'info',
+            'Backend Stripe config load হয়নি। Default test key ব্যবহার হচ্ছে।',
+          );
+        }
+      }
+
+      function toggleConfig() {
+        document.getElementById('configToggle').classList.toggle('open');
+        document.getElementById('configBody').classList.toggle('open');
+      }
+      function openConfig() {
+        document.getElementById('configToggle').classList.add('open');
+        document.getElementById('configBody').classList.add('open');
+      }
+
+      async function fetchConPreview() {
+        const base = document
           .getElementById('baseUrl')
           .value.trim()
           .replace(/\/$/, '');
         const token = document.getElementById('jwtToken').value.trim();
-        const subId = document.getElementById('subId').value.trim();
+        const id = document.getElementById('conId').value.trim();
+        if (!id || !base) return;
+        try {
+          const res = await fetch(`${base}/consultation/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!res.ok) {
+            let errMsg = `Error ${res.status}`;
+            try {
+              const errData = await res.json();
+              errMsg = errData?.message || errMsg;
+            } catch (e) {}
+            showMsg('error', errMsg);
+            // Reset preview elements
+            document.getElementById('conTypeDisplay').textContent =
+              'Consultation';
+            document.getElementById('conDurationDisplay').textContent =
+              'Select type in config';
+            document.getElementById('planPriceDisplay').textContent = '—';
+            document.getElementById('amountDisplay').textContent = '$0.00';
+            document.getElementById('amountRow').style.display = 'none';
+            document.getElementById('statusArea').style.display = 'none';
+            return;
+          }
+          const { data } = await res.json();
+          if (data) {
+            showMsg('', ''); // Clear error if fetch succeeded
+            document.getElementById('conTypeDisplay').textContent =
+              data.type || 'Consultation';
+            document.getElementById('conDurationDisplay').textContent =
+              data.duration || '';
+            if (data.fee !== undefined && data.fee !== null) {
+              document.getElementById('planPriceDisplay').textContent = Number(
+                data.fee,
+              ).toFixed(2);
+              document.getElementById('amountDisplay').textContent =
+                `$${Number(data.fee).toFixed(2)}`;
+              document.getElementById('amountRow').style.display = 'flex';
+            }
+            updateStatusBadge(
+              data.status,
+              data.paymentStatus,
+              data.adminStatus,
+              data.fee,
+            );
+          }
+        } catch (e) {
+          showMsg('error', 'Network error: Failed to connect to backend.');
+          console.log('Preview failed', e);
+        }
+      }
 
-        // Validation
-        if (!pubKey || !subId) {
+      function updateStatusBadge(status, payStatus, adminStatus, fee) {
+        const area = document.getElementById('statusArea');
+        const badge = document.getElementById('statusBadge');
+        const text = document.getElementById('statusText');
+        const dot = badge.querySelector('.status-dot');
+        area.style.display = 'block';
+
+        badge.className = 'status-badge';
+        dot.classList.remove('pulse');
+
+        if (payStatus === 'Paid' && adminStatus === 'approved') {
+          badge.className = 'status-badge approved';
+          text.textContent = '✅ Approved & Paid';
+        } else if (payStatus === 'Refunded' || adminStatus === 'rejected') {
+          badge.className = 'status-badge rejected';
+          text.textContent = '❌ Rejected (Refunded)';
+        } else if (payStatus === 'Authorized') {
+          badge.className = 'status-badge paid';
+          text.textContent = '💳 Authorized — Awaiting Approval';
+          dot.classList.add('pulse');
+        } else if (payStatus === 'Paid') {
+          badge.className = 'status-badge paid';
+          text.textContent = '💳 Paid — Awaiting Approval';
+          dot.classList.add('pulse');
+        } else if (fee === 0 || !fee) {
+          badge.className = 'status-badge free';
+          text.textContent = '🎉 Free Consultation';
+        } else {
+          badge.className = 'status-badge pending';
+          text.textContent = '⏳ Pending Payment';
+          dot.classList.add('pulse');
+        }
+      }
+
+      async function pay() {
+        if (busy) return;
+        const pk = document.getElementById('pubKey').value.trim();
+        const base = document
+          .getElementById('baseUrl')
+          .value.trim()
+          .replace(/\/$/, '');
+        const token = document.getElementById('jwtToken').value.trim();
+        const conId = document.getElementById('conId').value.trim();
+
+        if (!conId) {
           openConfig();
-          showMsg('error', 'API Config এ Publishable Key ও Subscribe ID দাও');
+          showMsg('error', 'Consultation ID দাও config এ');
           return;
         }
-        if (!pubKey.startsWith('pk_')) {
-          showMsg(
-            'error',
-            'Invalid Stripe key - must start with pk_test_ or pk_live_',
-          );
+        if (!token) {
+          openConfig();
+          showMsg('error', 'JWT token দাও — login kore nao');
           return;
         }
-        if (!baseUrl) {
-          showMsg('error', 'Backend URL required in API Config');
+        if (!pk.startsWith('pk_')) {
+          showMsg('error', 'Invalid Stripe key');
           return;
         }
 
-        if (!stripe) {
-          initStripe(pubKey);
-        }
-
-        isPaymentProcessing = true;
+        if (!stripe || activeStripeKey !== pk) initStripe(pk);
+        busy = true;
         setLoading(true);
         showMsg('', '');
 
         try {
-          // 1. Get clientSecret from backend
-          const headers = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
-
-          const res = await fetch(`${baseUrl}/payment/${subId}`, {
+          showMsg('info', 'Creating payment intent…');
+          const res = await fetch(`${base}/payment/consultation/${conId}`, {
             method: 'POST',
-            headers,
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
           });
 
           if (!res.ok) {
-            const data = await res.json();
-            showMsg(
-              'error',
-              data?.message ?? `Error: ${res.status} ${res.statusText}`,
-            );
+            const d = await res.json();
+            showMsg('error', d?.message || `Error ${res.status}`);
             return;
           }
 
@@ -898,12 +1155,11 @@
           if (!clientSecret) {
             showMsg(
               'error',
-              'clientSecret পাওয়া যায়নি — backend response চেক করো',
+              'clientSecret পাওয়া যায়নি — backend response check koro',
             );
             return;
           }
 
-          // Update amount display
           if (amount) {
             document.getElementById('amountDisplay').textContent =
               `$${Number(amount).toFixed(2)}`;
@@ -912,9 +1168,8 @@
             document.getElementById('amountRow').style.display = 'flex';
           }
 
-          showMsg('info', 'Processing payment...');
+          showMsg('info', 'Confirming card with Stripe…');
 
-          // 2. Confirm card payment using newer confirmPayment API
           const { error, paymentIntent } = await stripe.confirmCardPayment(
             clientSecret,
             {
@@ -923,47 +1178,110 @@
           );
 
           if (error) {
-            showMsg('error', error.message || 'Payment processing failed');
-          } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+            showMsg('error', error.message || 'Payment failed');
+          } else if (
+            paymentIntent?.status === 'requires_capture' ||
+            paymentIntent?.status === 'succeeded'
+          ) {
             document.getElementById('successId').textContent =
               `PaymentIntent: ${paymentIntent.id}`;
             document.getElementById('successOverlay').classList.add('show');
-            showMsg('success', 'Payment successful!');
           } else if (paymentIntent) {
             showMsg('info', `Payment status: ${paymentIntent.status}`);
           }
         } catch (e) {
-          console.error('Payment error:', e);
-          showMsg('error', `Error: ${e.message}`);
+          showMsg('error', e.message);
         } finally {
-          isPaymentProcessing = false;
+          busy = false;
           setLoading(false);
         }
       }
 
-      function openConfig() {
-        const toggle = document.getElementById('configToggle');
-        const body = document.getElementById('configBody');
-        if (toggle && body) {
-          toggle.classList.add('open');
-          body.classList.add('open');
+      async function checkStatus() {
+        const base = document
+          .getElementById('baseUrl')
+          .value.trim()
+          .replace(/\/$/, '');
+        const token = document.getElementById('jwtToken').value.trim();
+        const conId = document.getElementById('conId').value.trim();
+
+        if (!conId) {
+          showMsg('error', 'Consultation ID config এ দাও');
+          return;
+        }
+
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          const res = await fetch(`${base}/consultation/${conId}`, { headers });
+          if (!res.ok) {
+            const d = await res.json();
+            showMsg('error', d?.message || `Error ${res.status}`);
+            return;
+          }
+          const { data } = await res.json();
+          if (!data) {
+            showMsg('error', 'Data পাওয়া যায়নি');
+            return;
+          }
+
+          // Fill status card
+          document.getElementById('sc-id').textContent = data._id || conId;
+          document.getElementById('sc-type').textContent = data.type || '—';
+          document.getElementById('sc-fee').textContent = data.fee
+            ? `$${data.fee}`
+            : 'Free';
+
+          const statusEl = document.getElementById('sc-status');
+          statusEl.textContent = data.status || '—';
+          statusEl.className =
+            'status-val s-' +
+            (data.status || '').toLowerCase().replace(' ', '');
+
+          const payEl = document.getElementById('sc-pay');
+          payEl.textContent = data.paymentStatus || '—';
+          payEl.className =
+            'status-val ' +
+            (data.paymentStatus === 'Paid' ? 's-paid' : 's-free');
+
+          const adminEl = document.getElementById('sc-admin');
+          adminEl.textContent = data.adminStatus || 'Pending';
+          if (data.adminStatus === 'approved')
+            adminEl.className = 'status-val s-confirmed';
+          else if (data.adminStatus === 'rejected')
+            adminEl.className = 'status-val s-cancelled';
+          else adminEl.className = 'status-val s-pending';
+
+          if (data.meetingLink) {
+            document.getElementById('sc-meeting').innerHTML =
+              `<a href="${data.meetingLink}" target="_blank" style="color:var(--accent2)">${data.meetingLink}</a>`;
+            document.getElementById('sc-meeting-row').style.display = 'flex';
+          } else {
+            document.getElementById('sc-meeting-row').style.display = 'none';
+          }
+
+          document.getElementById('statusCard').classList.add('show');
+          updateStatusBadge(
+            data.status,
+            data.paymentStatus,
+            data.adminStatus,
+            data.fee,
+          );
+        } catch (e) {
+          showMsg('error', 'Backend unreachable: ' + e.message);
         }
       }
 
       function setLoading(on) {
-        const payBtn = document.getElementById('payBtn');
-        const payText = document.getElementById('payText');
-        const spin = document.getElementById('spin');
-
-        if (payBtn) payBtn.disabled = on;
-        if (payText) payText.style.display = on ? 'none' : 'inline';
-        if (spin) spin.style.display = on ? 'block' : 'none';
+        document.getElementById('payBtn').disabled = on;
+        document.getElementById('payText').style.display = on
+          ? 'none'
+          : 'inline';
+        document.getElementById('spin').style.display = on ? 'block' : 'none';
       }
 
       function showMsg(type, text) {
         const el = document.getElementById('msg');
-        if (!el) return;
-
         if (!type) {
           el.className = 'msg';
           el.textContent = '';
@@ -974,21 +1292,13 @@
       }
 
       function resetPage() {
-        const successOverlay = document.getElementById('successOverlay');
-        if (successOverlay) {
-          successOverlay.classList.remove('show');
-        }
+        document.getElementById('successOverlay').classList.remove('show');
         clientSecret = null;
-        isPaymentProcessing = false;
+        busy = false;
         const k = document.getElementById('pubKey').value.trim();
-        if (k && k.startsWith('pk_')) {
-          initStripe(k);
-        }
+        if (k.startsWith('pk_')) initStripe(k);
         showMsg('', '');
-        const amountRow = document.getElementById('amountRow');
-        if (amountRow) {
-          amountRow.style.display = 'none';
-        }
+        checkStatus(); // refresh status after reset
       }
     </script>
   </body>
